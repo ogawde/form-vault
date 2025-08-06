@@ -1,52 +1,56 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
-import jwt from '@fastify/jwt';
 import rateLimit from '@fastify/rate-limit';
-import { config } from 'dotenv';
+import jwt from '@fastify/jwt';
+import { env } from './config/env';
+import { registerAuthRoutes } from './routes/auth.routes';
+import { authMiddleware } from './middleware/auth.middleware';
 
-config();
+const app = Fastify({
+  logger: true,
+});
 
-const fastify = Fastify({
-    logger: true
+app.register(cors, {
+  origin: true,
+  credentials: true,
+});
+
+app.register(rateLimit, {
+  max: 100,
+  timeWindow: '1 minute',
+});
+
+app.register(jwt, {
+  secret: env.JWT_SECRET,
+});
+
+app.decorate('authenticate', async function (request: any, reply: any) {
+  await authMiddleware(request, reply);
 });
 
 
+app.get('/health', async (request, reply) => {
+  return { status: 'ok', timestamp: new Date().toISOString() };
+});
+
+app.register(registerAuthRoutes);
+
+
 const start = async () => {
-    try {
-        await fastify.register(cors, {
-            origin: true,
-            credentials: true
-        });
-
-        await fastify.register(jwt, {
-            secret: 'secret-key'
-        });
-
-
-        await fastify.register(rateLimit, {
-            max: 100,
-            timeWindow: '15 minutes'
-        });
-
-
-        fastify.get('/health', async (request, reply) => {
-            return { status: 'ok', timestamp: new Date().toISOString() };
-        });
-
-
-        fastify.get('/', async (request, reply) => {
-            return { message: 'FormVault API is started successfully' };
-        });
-
-        const port = Number(process.env.PORT) || 3000;
-        const host = process.env.HOST || '0.0.0.0';
-
-        await fastify.listen({ port, host });
-
-    } catch (err) {
-        fastify.log.error(err);
-        process.exit(1);
-    }
+  try {
+    await app.listen({ port: env.PORT, host: '0.0.0.0' });
+    app.log.info(`Server listening on http://localhost:${env.PORT}`);
+  } catch (err) {
+    app.log.error(err);
+    process.exit(1);
+  }
 };
 
 start();
+
+declare module 'fastify' {
+  interface FastifyInstance {
+    authenticate: any;
+  }
+}
+
