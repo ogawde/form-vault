@@ -3,9 +3,11 @@ import cors from '@fastify/cors';
 import rateLimit from '@fastify/rate-limit';
 import jwt from '@fastify/jwt';
 import { env } from './config/env';
+import { registerErrorHandler } from './middleware/errorHandler.middleware';
 import { registerAuthRoutes } from './routes/auth.routes';
-import { authMiddleware } from './middleware/auth.middleware';
 import { registerFormRoutes } from './routes/forms.routes';
+import { registerSubmissionRoutes } from './routes/submissions.routes';
+import { authMiddleware } from './middleware/auth.middleware';
 
 const app = Fastify({
   logger: true,
@@ -29,13 +31,15 @@ app.decorate('authenticate', async function (request: any, reply: any) {
   await authMiddleware(request, reply);
 });
 
+app.register(registerErrorHandler);
 
 app.get('/health', async (request, reply) => {
   return { status: 'ok', timestamp: new Date().toISOString() };
 });
-app.register(registerFormRoutes);
-app.register(registerAuthRoutes);
 
+app.register(registerAuthRoutes);
+app.register(registerFormRoutes);
+app.register(registerSubmissionRoutes);
 
 const start = async () => {
   try {

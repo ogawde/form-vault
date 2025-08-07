@@ -11,6 +11,11 @@
     "db:studio": "prisma studio",
     "db:generate": "prisma generate"
   },
+  "keywords": [
+    "form",
+    "api",
+    "backend"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {

@@ -20,4 +20,51 @@ model User {
   name      String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  forms       Form[]
+  apiKeys     ApiKey[]
 }
+
+model Form {
+  id                String       @id
+  userId            String?
+  name              String
+  description       String?
+  isActive          Boolean      @default(true)
+  redirectUrl       String?
+  notificationEmail String?
+  allowedOrigins    Json?
+  submissionCount   Int          @default(0)
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  user              User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  submissions       Submission[]
+
+  @@index([userId])
+}
+
+model Submission {
+  id        String   @id @default(uuid())
+  formId    String
+  data      Json
+  ipAddress String?
+  userAgent String?
+  referrer  String?
+  createdAt DateTime @default(now())
+  form      Form     @relation(fields: [formId], references: [id], onDelete: Cascade)
+
+  @@index([formId])
+  @@index([formId, createdAt])
+}
+
+model ApiKey {
+  id        String   @id @default(uuid())
+  userId    String
+  key       String   @unique
+  name      String
+  lastUsedAt DateTime?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
