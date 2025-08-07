@@ -5,6 +5,7 @@ import jwt from '@fastify/jwt';
 import { env } from './config/env';
 import { registerAuthRoutes } from './routes/auth.routes';
 import { authMiddleware } from './middleware/auth.middleware';
+import { registerFormRoutes } from './routes/forms.routes';
 
 const app = Fastify({
   logger: true,
@@ -32,7 +33,7 @@ app.decorate('authenticate', async function (request: any, reply: any) {
 app.get('/health', async (request, reply) => {
   return { status: 'ok', timestamp: new Date().toISOString() };
 });
-
+app.register(registerFormRoutes);
 app.register(registerAuthRoutes);
 
 
